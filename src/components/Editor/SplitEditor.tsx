@@ -6,8 +6,10 @@ import { Play, Database } from "lucide-react";
 import alasql from "alasql";
 import Papa from "papaparse";
 import "./SplitEditor.css";
+import ace from "ace-builds";
+ace.config.set("basePath", "/node_modules/ace-builds/src-noconflict");
 
-import "ace-builds/src-noconflict/mode-sql";
+import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 
