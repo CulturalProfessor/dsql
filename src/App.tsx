@@ -1,14 +1,19 @@
 import { useState } from "react";
-import "./App.css";
 import SplitEditor from "./components/Editor/SplitEditor";
 import SidePanel from "./components/SidePanel/SidePanel";
+import CsvUploader from "./components/Uploader/Uploader";
+import "./App.css";
 
 function App() {
-  const [query, setQuery] = useState(""); 
+  const [query, setQuery] = useState("");
 
   return (
     <>
-      <SidePanel setQuery={setQuery} /> 
+      <div className="top-bar">
+        <SidePanel setQuery={setQuery} />
+
+        <CsvUploader />
+      </div>
       <SplitEditor query={query} setQuery={setQuery} />
     </>
   );

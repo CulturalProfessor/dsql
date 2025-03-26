@@ -1,0 +1,32 @@
+.uploader-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .upload-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background 0.3s ease;
+  }
+  
+  .upload-button:hover {
+    background: #0056b3;
+  }
+  
+  .upload-confirm {
+    background: #28a745;
+  }
+  
+  .upload-confirm:hover {
+    background: #1e7e34;
+  }
+  

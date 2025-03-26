@@ -1,5 +1,5 @@
 import { Button, CloseButton, Drawer, Portal, VStack } from "@chakra-ui/react";
-import { useQueryContext } from "@/context";
+import { useQueryContext } from "@/utils/context";
 import { History } from "lucide-react";
 
 const SidePanel = ({ setQuery }: { setQuery: (query: string) => void }) => {
