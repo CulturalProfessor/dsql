@@ -1,6 +1,15 @@
-import { Button, CloseButton, Drawer, Portal, VStack } from "@chakra-ui/react";
+import {
+  Button,
+  CloseButton,
+  Drawer,
+  Portal,
+  VStack,
+  Text,
+} from "@chakra-ui/react";
 import { useQueryContext } from "@/utils/context";
 import { History } from "lucide-react";
+import { Tooltip } from "@/components/ui/tooltip";
+const MAX_QUERY_LENGTH = 30;
 
 const SidePanel = ({ setQuery }: { setQuery: (query: string) => void }) => {
   const { pastQueries } = useQueryContext();
@@ -20,19 +29,32 @@ const SidePanel = ({ setQuery }: { setQuery: (query: string) => void }) => {
               <Drawer.Title>Past Queries</Drawer.Title>
             </Drawer.Header>
             <Drawer.Body>
-              <VStack align="stretch">
-                {pastQueries.length == 0
-                  ? "No past Queries!"
-                  : pastQueries.map((query, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setQuery(query)}
-                      >
-                        {query}
-                      </Button>
-                    ))}
+              <VStack align="stretch" maxHeight="800px" overflowY="auto">
+                {pastQueries.length === 0 ? (
+                  <Text color="gray.500">No past queries!</Text>
+                ) : (
+                  pastQueries.map((query, index) => {
+                    const truncatedQuery =
+                      query.length > MAX_QUERY_LENGTH
+                        ? `${query.slice(0, MAX_QUERY_LENGTH)}...`
+                        : query;
+
+                    return (
+                      <Tooltip key={index} content={query}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setQuery(query)}
+                          textAlign="left"
+                          width="full"
+                          maxWidth="100%"
+                        >
+                          <Text width="full">{truncatedQuery}</Text>
+                        </Button>
+                      </Tooltip>
+                    );
+                  })
+                )}
               </VStack>
             </Drawer.Body>
             <Drawer.CloseTrigger asChild>

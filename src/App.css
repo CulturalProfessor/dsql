@@ -6,3 +6,8 @@
   background: #333;
   color: #fff;
 }
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+}

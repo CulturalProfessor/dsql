@@ -20,7 +20,8 @@ interface SplitEditorProps {
 
 const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
-  const { addQuery, csvData } = useQueryContext();
+  const { addQuery } = useQueryContext();
+  const [tableName, setTableName] = useState<string>("orders");
   const [resultData, setResultData] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
@@ -33,6 +34,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
       sizes: [25, 75],
       gutterSize: 8,
     });
+
     fetch("/orders.csv")
       .then((response) => response.text())
       .then((csvText) => {
@@ -40,12 +42,39 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
           header: true,
           skipEmptyLines: true,
           complete: (result) => {
+            setLoading(false);
+
+            const columns = Object.keys(result.data[0] || {});
+
+            setTableName("orders");
+            const tableExists = alasql.tables[tableName];
+
+            if (tableExists) {
+              alasql(`DROP TABLE ${tableName}`); 
+            }
+
+            const createTableQuery = `CREATE TABLE ${tableName} (${columns
+              .map((col) => `[${col}] STRING`)
+              .join(", ")})`;
+
+            alasql(createTableQuery);
+
+            const insertQuery = `INSERT INTO ${tableName} VALUES (${columns
+              .map(() => "?")
+              .join(", ")})`;
+
+            result.data.forEach((row) => {
+              alasql(
+                insertQuery,
+                columns.map((col) => row[col])
+              );
+            });
             setResultData(result.data);
             setLoading(false);
           },
         });
       })
-      .catch((error) => console.error("Error loading default CSV:", error));
+      .catch((error) => console.error("Error loading CSV:", error));
   }, []);
 
   const runQuery = () => {
@@ -119,7 +148,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
         <div id="results" className="split-panel">
           <div className="results-header">
             <Database size={18} />
-            <h3>Query Results</h3>
+            <h3>Query Results (Table : {tableName ? `${tableName}` : ""})</h3>
           </div>
 
           {loading ? (

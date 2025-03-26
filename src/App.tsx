@@ -5,13 +5,13 @@ import CsvUploader from "./components/Uploader/Uploader";
 import "./App.css";
 
 function App() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(`SELECT * FROM orders;`);
 
   return (
     <>
       <div className="top-bar">
         <SidePanel setQuery={setQuery} />
-
+        <div className="title">SQL Playground</div>
         <CsvUploader />
       </div>
       <SplitEditor query={query} setQuery={setQuery} />
