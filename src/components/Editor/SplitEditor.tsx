@@ -14,7 +14,6 @@ import "ace-builds/src-noconflict/ext-language_tools";
 interface SplitEditorProps {
   query: string;
   setQuery: (query: string) => void;
-  data: Record<string, any>[];
 }
 
 const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
@@ -61,7 +60,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
     setTimeout(() => {
       try {
         addQuery(query);
-        const result = alasql(query, [csvData]);
+        const result = alasql(query, [resultData]);
 
         if (!Array.isArray(result)) {
           throw new Error("Unexpected query result format.");
