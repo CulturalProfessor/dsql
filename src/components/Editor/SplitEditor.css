@@ -1,3 +1,7 @@
+body {
+  font-family: "Arial", sans-serif;
+}
+
 .horizontal-split-editor {
   display: flex;
   flex-direction: column;
@@ -6,8 +10,7 @@
 .split-container {
   height: 800px;
   display: flex;
-  flex-direction: row;
-  font-family: "Arial", sans-serif;
+  font-family: inherit;
 }
 
 .split-panel {
@@ -16,6 +19,7 @@
   padding: 10px;
   border: 1px solid #ccc;
   overflow: auto;
+  border-radius: 5px;
 }
 
 #editor {
@@ -24,8 +28,8 @@
   color: #fff;
   font-size: 14px;
   font-weight: 500;
+  border: 2px solid black;
   border-radius: 5px;
-  border: black 2px solid;
 }
 
 #results {
@@ -35,15 +39,14 @@
   font-size: 14px;
   font-weight: 500;
   padding: 10px;
+  border: 2px solid black;
   border-radius: 5px;
-  border: black 2px solid;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 #results table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #ccc;
   background: #fff;
   border-radius: 5px;
   overflow: hidden;
@@ -76,7 +79,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 32px;
   font-size: 16px;
   font-weight: bold;
   color: #838181;
@@ -84,51 +87,49 @@
 
 .results-header-title {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 8px;
+  align-items: center;
 }
 
-.export-csv-button {
+button {
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.export-csv-button,
+.view-toggle-button,
+.run-query-button {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
   background: #007bff;
   color: white;
-  border: none;
-  cursor: pointer;
   border-radius: 4px;
-  font-size: 14px;
-  transition: background 0.3s ease;
-}
-
-.view-toggle-button {
-  display: flex;
-  gap: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: background 0.3s ease;
 }
 
 .view-toggle-button button {
   padding: 6px 12px;
   border: 1px solid #ccc;
   background: #f9f9f9;
-  cursor: pointer;
 }
 
 .view-toggle-button .active {
   background: #007bff;
   color: white;
+}
+
+.run-query-button {
+  margin-top: 10px;
+  background: #28a745;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+.run-query-button:hover {
+  background: #218838;
 }
 
 .chart-container {
@@ -140,36 +141,12 @@
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.run-query-button {
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 5px;
-  transition: background 0.3s ease;
-}
-
-.run-query-button:hover {
-  background: #218838;
-}
-
 .query-metrics {
   padding: 12px;
-  background: #5b5b5c;
-  border-top: 1px solid #ccc;
-  font-size: 14px;
-  font-weight: 500;
-
-  border-radius: 5px;
-  border: black 2px solid;
+  background: #2c2c2c;
+  border: 2px solid black;
   margin-top: 10px;
+  border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -199,4 +176,48 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.table-container {
+  width: 100%;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  background: #222;
+  color: white;
+  font-weight: bold;
+  padding: 10px 0;
+}
+
+.table-cell {
+  flex: 1;
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-cell {
+  font-weight: bold;
+  background-color: #333;
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  transition: background 0.3s;
+}
+
+.table-row:nth-child(even) {
+  background: #f8f8f8;
+}
+
+.table-row:hover {
+  background: #eaeaea;
 }

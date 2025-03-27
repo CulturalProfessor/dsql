@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+large_orders.csv
 
 # Editor directories and files
 .vscode/*

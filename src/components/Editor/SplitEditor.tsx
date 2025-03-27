@@ -13,6 +13,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { FixedSizeList as List } from "react-window";
 import { Line } from "react-chartjs-2";
 import { loadCSVData, generateChartData, exportToCSV } from "@/utils/sqlUtils";
 import "./SplitEditor.css";
@@ -40,6 +41,25 @@ interface SplitEditorProps {
 interface QueryResult {
   [key: string]: any;
 }
+
+interface RowRendererProps {
+  index: number;
+  style: React.CSSProperties;
+  data: QueryResult[];
+}
+
+const RowRenderer: React.FC<RowRendererProps> = ({ index, style, data }) => {
+  const row = data[index];
+  return (
+    <div style={{ ...style, display: "flex" }} className="table-row">
+      {Object.keys(data[0] || {}).map((key) => (
+        <div key={key} className="table-cell">
+          {String(row[key])}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -193,24 +213,25 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
             </div>
           ) : viewMode === "table" ? (
             resultData.length > 0 ? (
-              <table>
-                <thead>
-                  <tr>
-                    {Object.keys(resultData[0]).map((key) => (
-                      <th key={key}>{key}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {resultData.map((row, index) => (
-                    <tr key={index}>
-                      {Object.values(row).map((value, i) => (
-                        <td key={i}>{String(value)}</td>
-                      ))}
-                    </tr>
+              <div className="table-container">
+                <div className="table-header">
+                  {Object.keys(resultData[0] || {}).map((key) => (
+                    <div key={key} className="table-cell header-cell">
+                      {key}
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+                <List
+                  height={600}
+                  itemCount={resultData.length}
+                  itemSize={35}
+                  width="100%"
+                  itemData={resultData}
+                  className="table-list"
+                >
+                  {RowRenderer}
+                </List>
+              </div>
             ) : (
               <p>No data returned from the query.</p>
             )
