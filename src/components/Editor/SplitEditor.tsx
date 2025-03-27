@@ -4,7 +4,6 @@ import AceEditor from "react-ace";
 import Split from "split.js";
 import { Play, Database, BarChart } from "lucide-react";
 import alasql from "alasql";
-import Papa from "papaparse";
 import {
   Chart as ChartJS,
   PointElement,
@@ -15,11 +14,12 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { loadCSVData, generateChartData, exportToCSV } from "@/utils/sqlUtils";
 import "./SplitEditor.css";
 import ace from "ace-builds";
 ace.config.set("basePath", "/node_modules/ace-builds/src-noconflict");
 
-import "ace-builds/src-noconflict/mode-java";
+import "ace-builds/src-noconflict/mode-sql";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
 
@@ -37,17 +37,21 @@ interface SplitEditorProps {
   setQuery: (query: string) => void;
 }
 
+interface QueryResult {
+  [key: string]: any;
+}
+
 const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const { addQuery } = useQueryContext();
   const [tableName, setTableName] = useState<string>("orders");
-  const [resultData, setResultData] = useState<Record<string, any>[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [resultData, setResultData] = useState<QueryResult[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [rowCount, setRowCount] = useState<number | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any>(null);
-  const [viewMode, setViewMode] = useState("table");
+  const [viewMode, setViewMode] = useState<"table" | "chart">("table");
 
   useEffect(() => {
     Split(["#editor", "#results"], {
@@ -56,49 +60,10 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
       gutterSize: 8,
     });
 
-    fetch("/orders.csv")
-      .then((response) => response.text())
-      .then((csvText) => {
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (result) => {
-            setLoading(false);
-
-            const columns = Object.keys(result.data[0] || {});
-
-            setTableName("orders");
-            const tableExists = alasql.tables[tableName];
-
-            if (tableExists) {
-              alasql(`DROP TABLE ${tableName}`);
-            }
-
-            const createTableQuery = `CREATE TABLE ${tableName} (${columns
-              .map((col) => `[${col}] STRING`)
-              .join(", ")})`;
-
-            alasql(createTableQuery);
-
-            const insertQuery = `INSERT INTO ${tableName} VALUES (${columns
-              .map(() => "?")
-              .join(", ")})`;
-
-            result.data.forEach((row) => {
-              alasql(
-                insertQuery,
-                columns.map((col) => row[col])
-              );
-            });
-            setResultData(result.data);
-            setLoading(false);
-          },
-        });
-      })
-      .catch((error) => console.error("Error loading CSV:", error));
+    loadCSVData("/orders.csv", setTableName, setResultData, setLoading);
   }, []);
 
-  const runQuery = () => {
+  const runQuery = (): void => {
     if (!query.trim()) {
       setQueryError("Query cannot be empty.");
       setResultData([]);
@@ -112,7 +77,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
     setTimeout(() => {
       try {
         addQuery(query);
-        const result = alasql(query, [resultData]);
+        const result: QueryResult[] = alasql(query, [resultData]);
 
         if (!Array.isArray(result)) {
           throw new Error("Unexpected query result format.");
@@ -132,45 +97,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
       }
       setLoading(false);
     }, 500);
-  };
-
-  const exportToCSV = () => {
-    if (resultData.length === 0) {
-      alert("No data to export.");
-      return;
-    }
-
-    const csv = Papa.unparse(resultData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "query_results.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const generateChartData = (data: Record<string, any>[]) => {
-    if (data.length === 0) return null;
-
-    const keys = Object.keys(data[0]);
-    const firstNumericColumn = keys.find((key) => !isNaN(Number(data[0][key])));
-
-    if (!firstNumericColumn) return null;
-
-    return {
-      labels: data.map((_, index) => `Row ${index + 1}`),
-      datasets: [
-        {
-          label: firstNumericColumn,
-          data: data.map((row) => Number(row[firstNumericColumn])),
-          borderColor: "rgba(75, 192, 192, 1)",
-          backgroundColor: "rgba(75, 192, 192, 0.2)",
-          borderWidth: 2,
-          pointRadius: 2,
-        },
-      ],
-    };
   };
 
   return (
@@ -201,8 +127,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
             }}
           />
           <button onClick={runQuery} className="run-query-button">
-            <Play size={16} />
-            Run Query
+            <Play size={16} /> Run Query
           </button>
         </div>
 
@@ -210,7 +135,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
           <div className="results-header">
             <div className="results-header-title">
               <Database size={18} />
-              <h3>Query Results (Table : {tableName ? `${tableName}` : ""})</h3>
+              <h3>Query Results (Table: {tableName})</h3>
             </div>
             <button
               onClick={() =>
@@ -221,7 +146,10 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
               <BarChart size={18} />{" "}
               {viewMode === "table" ? "View Chart" : "View Table"}
             </button>
-            <button onClick={exportToCSV} className="export-csv-button">
+            <button
+              onClick={() => exportToCSV(resultData)}
+              className="export-csv-button"
+            >
               Export CSV
             </button>
           </div>
@@ -264,9 +192,8 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
           <p className="query-error">Error executing query.</p>
         ) : (
           <p>
-            <strong>Execution Time:</strong>{" "}
-            {executionTime ? executionTime.toFixed(2) : "0"} ms |
-            <strong> Rows Returned:</strong> {rowCount !== null ? rowCount : 0}
+            <strong>Execution Time:</strong> {executionTime?.toFixed(2) ?? "0"}{" "}
+            ms |<strong> Rows Returned:</strong> {rowCount ?? 0}
           </p>
         )}
       </div>
