@@ -7,10 +7,12 @@ import "./Uploader.css";
 const CsvUploader = () => {
   const [file, setFile] = useState<File | null>(null);
   const { setCsvData } = useQueryContext();
+  const [showUploadButton, setShowUploadButton] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
       setFile(event.target.files[0]);
+      setShowUploadButton(true);
     }
   };
 
@@ -23,6 +25,7 @@ const CsvUploader = () => {
       complete: (result) => {
         console.log("Parsed Data:", result.data);
         setCsvData(result.data);
+        setShowUploadButton(false);
       },
     });
   };
@@ -42,7 +45,7 @@ const CsvUploader = () => {
         Choose File
       </label>
 
-      {file && (
+      {file && showUploadButton && (
         <button className="upload-button upload-confirm" onClick={handleUpload}>
           <UploadCloud size={18} />
           Upload

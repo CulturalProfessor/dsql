@@ -43,7 +43,7 @@ interface QueryResult {
 
 const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
-  const { addQuery } = useQueryContext();
+  const { addQuery, csvData } = useQueryContext();
   const [tableName, setTableName] = useState<string>("orders");
   const [resultData, setResultData] = useState<QueryResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -52,7 +52,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
   const [queryError, setQueryError] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"table" | "chart">("table");
-
   useEffect(() => {
     Split(["#editor", "#results"], {
       direction: "horizontal",
@@ -62,6 +61,33 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
 
     loadCSVData("/orders.csv", setTableName, setResultData, setLoading);
   }, []);
+
+  useEffect(() => {
+    if (csvData.length > 0) {
+      Object.keys(alasql.tables).forEach((table) => {
+        alasql(`DROP TABLE IF EXISTS ${table}`);
+      });
+
+      const tableName = "uploaded_table";
+
+      const headers = Object.keys(csvData[0]);
+      const createTableQuery = `CREATE TABLE ${tableName} (${headers
+        .map((h) => `${h} STRING`)
+        .join(", ")})`;
+      alasql(createTableQuery);
+
+      csvData.forEach((row) => {
+        const values = headers
+          .map((h) => `'${(row[h] ?? "").replace(/'/g, "''")}'`)
+          .join(", ");
+        alasql(`INSERT INTO ${tableName} VALUES (${values})`);
+      });
+
+      setTableName(tableName);
+      setResultData(csvData);
+      setLoading(false);
+    }
+  }, [csvData]);
 
   const runQuery = (): void => {
     if (!query.trim()) {
@@ -154,31 +180,40 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
             </button>
           </div>
 
-          {loading ? (
+          {queryError ? (
+            <div className="error-message">
+              <p>
+                <strong>Error:</strong> {queryError}
+              </p>
+            </div>
+          ) : loading ? (
             <div className="spinner-container">
               <div className="spinner"></div>
               <p>Processing...</p>
             </div>
           ) : viewMode === "table" ? (
-            <table>
-              <thead>
-                <tr>
-                  {resultData.length > 0 &&
-                    Object.keys(resultData[0]).map((key) => (
+            resultData.length > 0 ? (
+              <table>
+                <thead>
+                  <tr>
+                    {Object.keys(resultData[0]).map((key) => (
                       <th key={key}>{key}</th>
                     ))}
-                </tr>
-              </thead>
-              <tbody>
-                {resultData.map((row, index) => (
-                  <tr key={index}>
-                    {Object.values(row).map((value, i) => (
-                      <td key={i}>{String(value)}</td>
-                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {resultData.map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, i) => (
+                        <td key={i}>{String(value)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No data returned from the query.</p>
+            )
           ) : chartData ? (
             <Line data={chartData} />
           ) : (

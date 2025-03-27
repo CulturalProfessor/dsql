@@ -1,20 +1,17 @@
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  useEffect,
-} from "react";
+import { ReactNode, createContext, useContext, useMemo, useState, useEffect } from "react";
 
 interface QueryContextType {
   pastQueries: string[];
   addQuery: (query: string) => void;
+  csvData: any[];
+  setCsvData: (data: any[]) => void;
 }
 
 const QueryContext = createContext<QueryContextType>({
   pastQueries: [],
   addQuery: () => {},
+  csvData: [],
+  setCsvData: () => {},
 });
 
 export const QueryProvider = ({ children }: { children: ReactNode }) => {
@@ -22,6 +19,8 @@ export const QueryProvider = ({ children }: { children: ReactNode }) => {
     const savedQueries = localStorage.getItem("pastQueries");
     return savedQueries ? JSON.parse(savedQueries) : [];
   });
+
+  const [csvData, setCsvData] = useState<any[]>([]);
 
   const addQuery = (query: string) => {
     const updatedQueries = [query, ...pastQueries.slice(0, 19)];
@@ -34,9 +33,9 @@ export const QueryProvider = ({ children }: { children: ReactNode }) => {
   }, [pastQueries]);
 
   const contextValue = useMemo(
-    () => ({ pastQueries, addQuery }),
+    () => ({ pastQueries, addQuery, csvData, setCsvData }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pastQueries]
+    [pastQueries, csvData]
   );
 
   return (
