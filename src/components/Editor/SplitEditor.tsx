@@ -2,9 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryContext } from "@/utils/context";
 import AceEditor from "react-ace";
 import Split from "split.js";
-import { Play, Database } from "lucide-react";
+import { Play, Database, BarChart } from "lucide-react";
 import alasql from "alasql";
 import Papa from "papaparse";
+import {
+  Chart as ChartJS,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 import "./SplitEditor.css";
 import ace from "ace-builds";
 ace.config.set("basePath", "/node_modules/ace-builds/src-noconflict");
@@ -12,6 +22,15 @@ ace.config.set("basePath", "/node_modules/ace-builds/src-noconflict");
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/theme-monokai";
 import "ace-builds/src-noconflict/ext-language_tools";
+
+ChartJS.register(
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+);
 
 interface SplitEditorProps {
   query: string;
@@ -27,6 +46,8 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [rowCount, setRowCount] = useState<number | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
+  const [chartData, setChartData] = useState<any>(null);
+  const [viewMode, setViewMode] = useState("table");
 
   useEffect(() => {
     Split(["#editor", "#results"], {
@@ -101,6 +122,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
         setExecutionTime(endTime - startTime);
         setRowCount(result.length);
         setResultData(result);
+        setChartData(generateChartData(result));
       } catch (error) {
         console.error("SQL Query Error:", error);
         setQueryError(
@@ -126,6 +148,29 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const generateChartData = (data: Record<string, any>[]) => {
+    if (data.length === 0) return null;
+
+    const keys = Object.keys(data[0]);
+    const firstNumericColumn = keys.find((key) => !isNaN(Number(data[0][key])));
+
+    if (!firstNumericColumn) return null;
+
+    return {
+      labels: data.map((_, index) => `Row ${index + 1}`),
+      datasets: [
+        {
+          label: firstNumericColumn,
+          data: data.map((row) => Number(row[firstNumericColumn])),
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderWidth: 2,
+          pointRadius: 2,
+        },
+      ],
+    };
   };
 
   return (
@@ -167,6 +212,15 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
               <Database size={18} />
               <h3>Query Results (Table : {tableName ? `${tableName}` : ""})</h3>
             </div>
+            <button
+              onClick={() =>
+                setViewMode(viewMode === "table" ? "chart" : "table")
+              }
+              className="view-toggle-button"
+            >
+              <BarChart size={18} />{" "}
+              {viewMode === "table" ? "View Chart" : "View Table"}
+            </button>
             <button onClick={exportToCSV} className="export-csv-button">
               Export CSV
             </button>
@@ -177,8 +231,8 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
               <div className="spinner"></div>
               <p>Processing...</p>
             </div>
-          ) : (
-            <table width="100%" cellPadding="5" cellSpacing="0">
+          ) : viewMode === "table" ? (
+            <table>
               <thead>
                 <tr>
                   {resultData.length > 0 &&
@@ -197,6 +251,10 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
                 ))}
               </tbody>
             </table>
+          ) : chartData ? (
+            <Line data={chartData} />
+          ) : (
+            <p>No chart data available, please run a query.</p>
           )}
         </div>
       </div>
