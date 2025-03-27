@@ -52,9 +52,10 @@ const RowRenderer: React.FC<RowRendererProps> = ({ index, style, data }) => {
   const row = data[index];
   return (
     <div style={{ ...style, display: "flex" }} className="table-row">
+      <div className="table-cell row-number">{index + 1}</div>
       {Object.keys(data[0] || {}).map((key) => (
-        <div key={key} className="table-cell">
-          {String(row[key])}
+        <div key={key} className="table-cell" title={String(row[key])}>
+          <span className="cell-content">{String(row[key])}</span>
         </div>
       ))}
     </div>
@@ -72,6 +73,12 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
   const [queryError, setQueryError] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"table" | "chart">("table");
+  const [currentPage, setCurrentPage] = useState(0);
+  const rowsPerPage = 50;
+  const [paginatedData, setPaginatedData] = useState<QueryResult[]>(
+    resultData.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
+  );
+
   useEffect(() => {
     Split(["#editor", "#results"], {
       direction: "horizontal",
@@ -81,6 +88,15 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
 
     loadCSVData("/orders.csv", setTableName, setResultData, setLoading);
   }, []);
+
+  useEffect(() => {
+    setPaginatedData(
+      resultData.slice(
+        currentPage * rowsPerPage,
+        (currentPage + 1) * rowsPerPage
+      )
+    );
+  }, [currentPage, resultData]);
 
   useEffect(() => {
     if (csvData.length > 0) {
@@ -134,6 +150,12 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
         setRowCount(result.length);
         setResultData(result);
         setChartData(generateChartData(result));
+        setPaginatedData(
+          result.slice(
+            currentPage * rowsPerPage,
+            (currentPage + 1) * rowsPerPage
+          )
+        );
       } catch (error) {
         console.error("SQL Query Error:", error);
         setQueryError(
@@ -215,22 +237,57 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
             resultData.length > 0 ? (
               <div className="table-container">
                 <div className="table-header">
+                  <div className="table-cell header-cell">#</div>
                   {Object.keys(resultData[0] || {}).map((key) => (
-                    <div key={key} className="table-cell header-cell">
-                      {key}
+                    <div
+                      key={key}
+                      className="table-cell header-cell"
+                      title={key}
+                    >
+                      <span className="cell-content">{key}</span>
                     </div>
                   ))}
                 </div>
+
                 <List
                   height={600}
-                  itemCount={resultData.length}
+                  itemCount={paginatedData.length}
                   itemSize={35}
                   width="100%"
-                  itemData={resultData}
+                  itemData={paginatedData}
                   className="table-list"
                 >
                   {RowRenderer}
                 </List>
+                <div className="pagination-controls">
+                  <button
+                    disabled={currentPage === 0}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 0))
+                    }
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {currentPage + 1} of{" "}
+                    {Math.ceil(resultData.length / rowsPerPage)}
+                  </span>
+                  <button
+                    disabled={
+                      (currentPage + 1) * rowsPerPage >= resultData.length
+                    }
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(
+                          prev + 1,
+                          Math.ceil(resultData.length / rowsPerPage) - 1
+                        )
+                      )
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             ) : (
               <p>No data returned from the query.</p>
