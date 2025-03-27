@@ -50,7 +50,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
             const tableExists = alasql.tables[tableName];
 
             if (tableExists) {
-              alasql(`DROP TABLE ${tableName}`); 
+              alasql(`DROP TABLE ${tableName}`);
             }
 
             const createTableQuery = `CREATE TABLE ${tableName} (${columns
@@ -112,6 +112,22 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
     }, 500);
   };
 
+  const exportToCSV = () => {
+    if (resultData.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+
+    const csv = Papa.unparse(resultData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "query_results.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="horizontal-split-editor">
       <div ref={editorContainerRef} className="split-container">
@@ -147,8 +163,13 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
 
         <div id="results" className="split-panel">
           <div className="results-header">
-            <Database size={18} />
-            <h3>Query Results (Table : {tableName ? `${tableName}` : ""})</h3>
+            <div className="results-header-title">
+              <Database size={18} />
+              <h3>Query Results (Table : {tableName ? `${tableName}` : ""})</h3>
+            </div>
+            <button onClick={exportToCSV} className="export-csv-button">
+              Export CSV
+            </button>
           </div>
 
           {loading ? (
