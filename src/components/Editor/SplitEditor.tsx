@@ -96,8 +96,14 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     resultData.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage)
   );
 
+  const splitInstance = useRef<Split.Instance | null>(null);
+
   useEffect(() => {
-    Split(["#editor", "#results"], {
+    if (splitInstance.current) {
+      splitInstance.current.destroy();
+    }
+
+    splitInstance.current = Split(["#editor", "#results"], {
       direction: "horizontal",
       sizes: [25, 75],
       gutterSize: 8,
@@ -106,7 +112,14 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
     loadCSVData(csvPath, setResultData, setLoading, tableName);
     setExecutionTime(null);
     setRowCount(null);
-  }, [csvPath]);
+
+    return () => {
+      if (splitInstance.current) {
+        splitInstance.current.destroy();
+        splitInstance.current = null;
+      }
+    };
+  }, [csvPath, tableName]);
 
   useEffect(() => {
     setPaginatedData(
@@ -139,7 +152,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({
       setResultData(csvData);
       setLoading(false);
     }
-  }, [csvData, csvPath]);
+  }, [csvData, csvPath, tableName]);
 
   const runQuery = (): void => {
     if (!query.trim()) {
