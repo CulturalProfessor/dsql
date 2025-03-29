@@ -7,9 +7,9 @@ interface CSVRow {
 
 export const loadCSVData = (
   filePath: string,
-  setTableName: (name: string) => void,
   setResultData: (data: CSVRow[]) => void,
-  setLoading: (loading: boolean) => void
+  setLoading: (loading: boolean) => void,
+  tableName: string
 ): void => {
   fetch(filePath)
     .then((response) => response.text())
@@ -23,9 +23,7 @@ export const loadCSVData = (
           if (result.data.length === 0) return;
 
           const columns: string[] = Object.keys(result.data[0]);
-          const tableName: string = "orders";
 
-          setTableName(tableName);
           if (alasql.tables[tableName]) {
             alasql(`DROP TABLE ${tableName}`);
           }

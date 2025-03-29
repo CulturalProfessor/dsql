@@ -2,12 +2,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  background: #333;
+  padding: 12px 20px;
+  background: #1e1e1e;
   color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: bold;
+  text-align: center;
+  flex-grow: 1;
+}
+
+.toggle-button {
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-button:active {
+  transform: scale(0.95);
 }

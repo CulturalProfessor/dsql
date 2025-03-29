@@ -36,6 +36,8 @@ ChartJS.register(
 interface SplitEditorProps {
   query: string;
   setQuery: (query: string) => void;
+  csvPath: string;
+  tableName: string;
 }
 
 interface QueryResult {
@@ -73,10 +75,14 @@ const RowRenderer: React.FC<RowRendererProps & { currentPage: number }> = ({
   );
 };
 
-const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
+const SplitEditor: React.FC<SplitEditorProps> = ({
+  query,
+  setQuery,
+  csvPath,
+  tableName,
+}) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const { addQuery, csvData } = useQueryContext();
-  const [tableName, setTableName] = useState<string>("orders");
   const [resultData, setResultData] = useState<QueryResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
@@ -97,8 +103,10 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
       gutterSize: 8,
     });
 
-    loadCSVData("/orders.csv", setTableName, setResultData, setLoading);
-  }, []);
+    loadCSVData(csvPath, setResultData, setLoading, tableName);
+    setExecutionTime(null);
+    setRowCount(null);
+  }, [csvPath]);
 
   useEffect(() => {
     setPaginatedData(
@@ -115,8 +123,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
         alasql(`DROP TABLE IF EXISTS ${table}`);
       });
 
-      const tableName = "uploaded_table";
-
       const headers = Object.keys(csvData[0]);
       const createTableQuery = `CREATE TABLE ${tableName} (${headers
         .map((h) => `${h} STRING`)
@@ -130,11 +136,11 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
         alasql(`INSERT INTO ${tableName} VALUES (${values})`);
       });
 
-      setTableName(tableName);
       setResultData(csvData);
       setLoading(false);
     }
-  }, [csvData]);
+  }, [csvData, csvPath]);
+
   const runQuery = (): void => {
     if (!query.trim()) {
       setQueryError("Query cannot be empty.");
