@@ -1,32 +1,55 @@
 .uploader-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.upload-button:hover {
+  background: #0056b3;
+}
+
+.upload-confirm {
+  background: #28a745;
+}
+
+.upload-confirm:hover {
+  background: #1e7e34;
+}
+
+.spinner {
+  height: 20px;
+  width: 20px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #28a745;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  
-  .upload-button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    background: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 14px;
-    transition: background 0.3s ease;
-  }
-  
-  .upload-button:hover {
-    background: #0056b3;
-  }
-  
-  .upload-confirm {
-    background: #28a745;
-  }
-  
-  .upload-confirm:hover {
-    background: #1e7e34;
-  }
-  
+}
+
+.warning-message {
+  color: #d97706;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}

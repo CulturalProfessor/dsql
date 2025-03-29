@@ -3,7 +3,7 @@ import path from "path";
 import { faker } from "@faker-js/faker";
 
 const OUTPUT_FILE = path.join("./", "large_orders.csv");
-const NUM_ROWS = 1000000;
+const NUM_ROWS = 99000;
 
 const headers = [
   "orderID",

@@ -46,13 +46,24 @@ interface RowRendererProps {
   index: number;
   style: React.CSSProperties;
   data: QueryResult[];
+  rowsPerPage: number;
 }
 
-const RowRenderer: React.FC<RowRendererProps> = ({ index, style, data }) => {
+const RowRenderer: React.FC<RowRendererProps & { currentPage: number }> = ({
+  index,
+  style,
+  data,
+  currentPage,
+  rowsPerPage,
+}) => {
   const row = data[index];
+  const rowNumber = currentPage * rowsPerPage + index + 1;
+
   return (
     <div style={{ ...style, display: "flex" }} className="table-row">
-      <div className="table-cell row-number">{index + 1}</div>
+      <div className="table-cell row-number" style={{ fontWeight: "bold" }}>
+        {rowNumber}
+      </div>
       {Object.keys(data[0] || {}).map((key) => (
         <div key={key} className="table-cell" title={String(row[key])}>
           <span className="cell-content">{String(row[key])}</span>
@@ -114,7 +125,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
 
       csvData.forEach((row) => {
         const values = headers
-          .map((h) => `'${(row[h] ?? "").replace(/'/g, "''")}'`)
+          .map((h) => `'${String(row[h] ?? "").replace(/'/g, "''")}'`)
           .join(", ");
         alasql(`INSERT INTO ${tableName} VALUES (${values})`);
       });
@@ -124,7 +135,6 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
       setLoading(false);
     }
   }, [csvData]);
-
   const runQuery = (): void => {
     if (!query.trim()) {
       setQueryError("Query cannot be empty.");
@@ -134,18 +144,19 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
 
     setLoading(true);
     setQueryError(null);
-    const startTime = performance.now();
 
     setTimeout(() => {
       try {
         addQuery(query);
+
+        const startTime = performance.now();
         const result: QueryResult[] = alasql(query, [resultData]);
+        const endTime = performance.now();
 
         if (!Array.isArray(result)) {
           throw new Error("Unexpected query result format.");
         }
 
-        const endTime = performance.now();
         setExecutionTime(endTime - startTime);
         setRowCount(result.length);
         setResultData(result);
@@ -164,7 +175,7 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
         setResultData([]);
       }
       setLoading(false);
-    }, 500);
+    });
   };
 
   return (
@@ -257,8 +268,17 @@ const SplitEditor: React.FC<SplitEditorProps> = ({ query, setQuery }) => {
                   itemData={paginatedData}
                   className="table-list"
                 >
-                  {RowRenderer}
+                  {({ index, style }) => (
+                    <RowRenderer
+                      index={index}
+                      style={style}
+                      data={paginatedData}
+                      currentPage={currentPage}
+                      rowsPerPage={rowsPerPage}
+                    />
+                  )}
                 </List>
+
                 <div className="pagination-controls">
                   <button
                     disabled={currentPage === 0}
